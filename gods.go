@@ -23,30 +23,30 @@ import (
 )
 
 const (
-	bpsSign   = "á"
-	kibpsSign = "â"
-	mibpsSign = "ã"
+	bpsSign   = "b/s"
+	kibpsSign = "Kb/s"
+	mibpsSign = "Mb/s"
 
-	unpluggedSign = "è"
-	pluggedSign   = "é"
+	unpluggedSign = "BAT"
+	pluggedSign   = "CHR BAT"
 
-	cpuSign = "Ï"
-	memSign = "Þ"
+	cpuSign = "CPU"
+	memSign = "MEM"
 
-	netReceivedSign    = "Ð"
-	netTransmittedSign = "Ñ"
+	netReceivedSign    = "in:"
+	netTransmittedSign = "out:"
 
-	floatSeparator = "à"
-	dateSeparator  = "Ý"
-	fieldSeparator = "û"
+	floatSeparator = "."
+	dateSeparator  = "-"
+	fieldSeparator = " | "
 )
 
 var (
 	netDevs = map[string]struct{}{
-		"eth0:": {},
-		"eth1:": {},
-		"wlan0:": {},
-		"ppp0:": {},
+		"eth0:":   {},
+		"eth1:":   {},
+		"wlan0:":  {},
+		"wlp3s0:": {},
 	}
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
 	rxOld = 0
@@ -113,11 +113,6 @@ func updateNetUse() string {
 
 // colored surrounds the percentage with color escapes if it is >= 70
 func colored(icon string, percentage int) string {
-	if percentage >= 100 {
-		return fmt.Sprintf("%s%3d", icon, percentage)
-	} else if percentage >= 70 {
-		return fmt.Sprintf("%s%3d", icon, percentage)
-	}
 	return fmt.Sprintf("%s%3d", icon, percentage)
 }
 
@@ -125,7 +120,7 @@ func colored(icon string, percentage int) string {
 func updatePower() string {
 	const powerSupply = "/sys/class/power_supply/"
 	var enFull, enNow, enPerc int = 0, 0, 0
-	var plugged, err = ioutil.ReadFile(powerSupply + "AC/online")
+	var plugged, err = ioutil.ReadFile(powerSupply + "ADP1/online")
 	if err != nil {
 		return "ÏERR"
 	}
@@ -229,6 +224,10 @@ func updateMemUse() string {
 
 // main updates the dwm statusbar every second
 func main() {
+	telAviv, err := time.LoadLocation("Israel")
+	if err != nil {
+		fmt.Println(err)
+	}
 	for {
 		var status = []string{
 			"",
@@ -236,6 +235,7 @@ func main() {
 			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
+			time.Now().In(telAviv).Format("Mon 02 " + dateSeparator + " 15:04:05"),
 			time.Now().Local().Format("Mon 02 " + dateSeparator + " 15:04:05"),
 		}
 		exec.Command("xsetroot", "-name", strings.Join(status, fieldSeparator)).Run()

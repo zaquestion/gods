@@ -2,7 +2,7 @@
 // the X root windows name so it can be displayed in the dwm status bar.
 //
 // The strange characters in the output are used by dwm to colorize the output
-// ( to , needs the http://dwm.suckless.org/patches/statuscolors patch) and
+// ( to , needs the http://dwm.suckless.org/patches/statuscolors patch) and
 // as Icons or separators (e.g. "Ý"). If you don't use the status-18 font
 // (https://github.com/schachmat/status-18), you should probably exchange them
 // by something else ("CPU", "MEM", "|" for separators, …).
@@ -56,7 +56,7 @@ var (
 // fixed builds a fixed width string with given pre- and fitting suffix
 func fixed(pre string, rate int) string {
 	if rate < 0 {
-		return pre + " ERR"
+		return pre + " ERR"
 	}
 
 	var decDigit = 0
@@ -64,12 +64,11 @@ func fixed(pre string, rate int) string {
 
 	switch {
 	case rate >= (1000 * 1024 * 1024): // > 999 MiB/s
-		return "" + pre + " ERR"
+		return pre + " ERR"
 	case rate >= (1000 * 1024): // display as MiB/s
 		decDigit = (rate / 1024 / 102) % 10
 		rate /= (1024 * 1024)
 		suf = mibpsSign
-		pre = "" + pre + ""
 	case rate >= 1000: // display as KiB/s
 		decDigit = (rate / 102) % 10
 		rate /= 1024
@@ -91,7 +90,7 @@ func fixed(pre string, rate int) string {
 func updateNetUse() string {
 	file, err := os.Open("/proc/net/dev")
 	if err != nil {
-		return netReceivedSign + " ERR " + netTransmittedSign + " ERR"
+		return netReceivedSign + " ERR " + netTransmittedSign + " ERR"
 	}
 	defer file.Close()
 
@@ -120,13 +119,13 @@ func colored(icon string, percentage int) string {
 func updatePower() string {
 	const powerSupply = "/sys/class/power_supply/"
 	var enFull, enNow, enPerc int = 0, 0, 0
-	var plugged, err = ioutil.ReadFile(powerSupply + "ADP1/online")
+	var plugged, err = ioutil.ReadFile(powerSupply + "AC/online")
 	if err != nil {
-		return "ÏERR"
+		return "ÏERR"
 	}
 	batts, err := ioutil.ReadDir(powerSupply)
 	if err != nil {
-		return "ÏERR"
+		return "ÏERR"
 	}
 
 	readval := func(name, field string) int {
@@ -157,7 +156,7 @@ func updatePower() string {
 	}
 
 	if enFull == 0 { // Battery found but no readable full file.
-		return "ÏERR"
+		return "ÏERR"
 	}
 
 	enPerc = enNow * 100 / enFull
@@ -167,9 +166,9 @@ func updatePower() string {
 	}
 
 	if enPerc <= 5 {
-		return fmt.Sprintf("%s%3d", icon, enPerc)
+		return fmt.Sprintf("%s%3d", icon, enPerc)
 	} else if enPerc <= 10 {
-		return fmt.Sprintf("%s%3d", icon, enPerc)
+		return fmt.Sprintf("%s%3d", icon, enPerc)
 	}
 	return fmt.Sprintf("%s%3d", icon, enPerc)
 }
@@ -179,11 +178,11 @@ func updateCPUUse() string {
 	var load float32
 	var loadavg, err = ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
-		return cpuSign + "ERR"
+		return cpuSign + "ERR"
 	}
 	_, err = fmt.Sscanf(string(loadavg), "%f", &load)
 	if err != nil {
-		return cpuSign + "ERR"
+		return cpuSign + "ERR"
 	}
 	return colored(cpuSign, int(load*100.0/float32(cores)))
 }
@@ -192,7 +191,7 @@ func updateCPUUse() string {
 func updateMemUse() string {
 	var file, err = os.Open("/proc/meminfo")
 	if err != nil {
-		return memSign + "ERR"
+		return memSign + "ERR"
 	}
 	defer file.Close()
 
@@ -201,7 +200,7 @@ func updateMemUse() string {
 	for info := bufio.NewScanner(file); done != 15 && info.Scan(); {
 		var prop, val = "", 0
 		if _, err = fmt.Sscanf(info.Text(), "%s %d", &prop, &val); err != nil {
-			return memSign + "ERR"
+			return memSign + "ERR"
 		}
 		switch prop {
 		case "MemTotal:":
@@ -224,10 +223,6 @@ func updateMemUse() string {
 
 // main updates the dwm statusbar every second
 func main() {
-	telAviv, err := time.LoadLocation("Israel")
-	if err != nil {
-		fmt.Println(err)
-	}
 	for {
 		var status = []string{
 			"",
@@ -235,7 +230,7 @@ func main() {
 			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
-			time.Now().In(telAviv).Format("Mon 02 " + dateSeparator + " 15:04:05"),
+			time.Now().In(time.UTC).Format("Mon 02 " + dateSeparator + " 15:04:05"),
 			time.Now().Local().Format("Mon 02 " + dateSeparator + " 15:04:05"),
 		}
 		exec.Command("xsetroot", "-name", strings.Join(status, fieldSeparator)).Run()
